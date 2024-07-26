@@ -19,7 +19,7 @@ class Key:
         return self.code == value.code and self.name == value.name
 
     def as_dict(self):
-        return {"code": self.code, "name": self.name}
+        return {"code": self.code, "name": self.name, "action": self.code - 3}
 
 
 class Keys:

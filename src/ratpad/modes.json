@@ -1,0 +1,14 @@
+[
+  {
+    "key": "hyprland.workspaces",
+    "title": "Workspaces",
+    "title_short": "WKSP",
+    "keys": ["01", "02", "03", "04", "05", "06", "07", "08", "09"]
+  },
+  {
+    "key": "hyprland.apps",
+    "title": "Apps",
+    "title_short": "APPS",
+    "keys": ["CODE", "DISC", "TERM", "WEB", "BTOP", "NVIM", "VPN"]
+  }
+]

@@ -5,6 +5,8 @@ import busio
 import json
 from .keymap import Key, Keys
 import usb_cdc
+from .mode import Mode, ModeManager
+from .display import DisplayManager
 
 try:
     from typing import Literal, Any
@@ -29,12 +31,14 @@ class CommandPacket:
 
 class PadManager:
     def __init__(self):
-        self.mode = "base"
+        self.mode: Mode | None = None
         self.pad = MacroPad()
         self.encoder_switch = self.pad.encoder_switch
         self.encoder_rotation = self.pad.encoder
         self.serial = usb_cdc.data
         self.serial.timeout = 0
+        self.modes = ModeManager()
+        self.display = DisplayManager(self.pad, self.modes)
 
     def send_packet(self, type: str, data: Any | None = None):
         self.serial.write(
@@ -54,16 +58,16 @@ class PadManager:
         encoder_value: int | None = None,
     ):
         if key:
-            packet = {"mode": self.mode, "type": "key", "key": key.as_dict()}
+            packet = {"mode": self.mode.key, "type": "key", "key": key.as_dict()}
         elif encoder_switch != None:
             packet = {
-                "mode": self.mode,
+                "mode": self.mode.key,
                 "type": "encoder.switch",
                 "pressed": encoder_switch,
             }
         elif encoder_value != None:
             packet = {
-                "mode": self.mode,
+                "mode": self.mode.key,
                 "type": "encoder.value",
                 "value": encoder_value,
             }
@@ -74,6 +78,7 @@ class PadManager:
 
     def run(self):
         self.send_packet("connect")
+        self.display.refresh()
         try:
             while True:
                 line = self.serial.readline()
@@ -87,16 +92,46 @@ class PadManager:
                     event = self.pad.keys.events.get()
                     key = Keys.get(event.key_number)
                     if event.pressed:
-                        if not key.special:
-                            self.send_event(key=key)
+                        if key.special:
+                            if self.mode:
+                                if key == Keys.PREV:
+                                    self.mode = self.modes.previous(self.mode)
+                                elif key == Keys.NEXT:
+                                    self.mode = self.modes.next(self.mode)
+                                else:
+                                    self.mode = None
 
-                if self.pad.encoder_switch != self.encoder_switch:
-                    self.encoder_switch = self.pad.encoder_switch
-                    self.send_event(encoder_switch=self.encoder_switch)
+                                self.display.set_mode(
+                                    self.mode.key if self.mode else None
+                                )
+                            else:
+                                if key == Keys.PREV:
+                                    self.display.prev_page()
+                                elif key == Keys.NEXT:
+                                    self.display.next_page()
+                                else:
+                                    self.mode = self.modes.get(self.display.last_mode)
+                                    self.display.set_mode(
+                                        self.mode.key if self.mode else None
+                                    )
 
-                if self.pad.encoder != self.encoder_rotation:
-                    self.encoder_rotation = self.pad.encoder
-                    self.send_event(encoder_value=self.encoder_rotation)
+                        else:
+                            if self.mode:
+                                self.send_event(key=key)
+                            else:
+                                resolved = self.display.resolve_mode(key)
+                                if resolved:
+                                    self.mode = resolved
+                                    self.display.set_mode(self.mode.key)
+
+                if self.mode:
+                    if self.pad.encoder_switch != self.encoder_switch:
+                        self.encoder_switch = self.pad.encoder_switch
+                        self.send_event(encoder_switch=self.encoder_switch)
+
+                    if self.pad.encoder != self.encoder_rotation:
+                        self.encoder_rotation = self.pad.encoder
+                        self.send_event(encoder_value=self.encoder_rotation)
 
                 time.sleep(0.1)
         finally:
