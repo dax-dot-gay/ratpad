@@ -89,7 +89,7 @@ class DisplayManager:
         lc = 2
         for i in range(9):
             if i < len(mode.keys):
-                buttons.append("[" + self.pad_center(mode.keys[i], 4) + "]")
+                buttons.append("[" + self.pad_center(mode.label(i), 4) + "]")
             else:
                 buttons.append("[ -- ]")
             if len(buttons) == 3:

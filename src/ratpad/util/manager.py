@@ -1,5 +1,5 @@
 import time
-from adafruit_macropad import MacroPad
+from adafruit_macropad import MacroPad, Keycode
 import board
 import busio
 import json
@@ -117,7 +117,17 @@ class PadManager:
 
                         else:
                             if self.mode:
-                                self.send_event(key=key)
+                                key_info = self.mode[key.code - 3]
+                                if key_info:
+                                    if key_info["keys"]:
+                                        self.pad.keyboard.send(
+                                            *[
+                                                getattr(Keycode, i.upper())
+                                                for i in key_info["keys"].split("+")
+                                            ]
+                                        )
+                                    else:
+                                        self.send_event(key=key)
                             else:
                                 resolved = self.display.resolve_mode(key)
                                 if resolved:

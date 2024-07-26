@@ -2,11 +2,29 @@ import json
 
 
 class Mode:
-    def __init__(self, key: str, title: str, title_short: str, keys: list[str | None]):
+
+    def __init__(
+        self,
+        key: str,
+        title: str,
+        title_short: str,
+        keys: list[str | dict[str, str] | None],
+    ):
         self.key = key
         self.title = title
         self.title_short = title_short
-        self.keys = keys
+        self.keys = [
+            (
+                (
+                    {"label": i, "keys": None}
+                    if isinstance(i, str)
+                    else {"label": i["label"], "keys": i.get("keys", None)}
+                )
+                if i
+                else None
+            )
+            for i in keys
+        ]
 
     @classmethod
     def from_entry(cls, data: dict) -> "Mode":
@@ -14,9 +32,15 @@ class Mode:
 
     def label(self, index: int) -> str:
         if len(self.keys) > index:
-            return self.keys[index] if self.keys[index] else "--"
+            return self.keys[index]["label"] if self.keys[index] else "--"
         else:
             return "--"
+
+    def __getitem__(self, key: int) -> dict[str, str] | None:
+        if len(self.keys) > key:
+            return self.keys[key] if self.keys[key] else None
+        else:
+            return None
 
 
 class ModeManager:

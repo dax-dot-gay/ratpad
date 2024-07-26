@@ -3,7 +3,44 @@
     "key": "hyprland.workspaces",
     "title": "Workspaces",
     "title_short": "WKSP",
-    "keys": ["01", "02", "03", "04", "05", "06", "07", "08", "09"]
+    "keys": [
+      {
+        "label": "01",
+        "keys": "gui+one"
+      },
+      {
+        "label": "02",
+        "keys": "gui+two"
+      },
+      {
+        "label": "03",
+        "keys": "gui+three"
+      },
+      {
+        "label": "04",
+        "keys": "gui+four"
+      },
+      {
+        "label": "05",
+        "keys": "gui+five"
+      },
+      {
+        "label": "06",
+        "keys": "gui+six"
+      },
+      {
+        "label": "07",
+        "keys": "gui+seven"
+      },
+      {
+        "label": "08",
+        "keys": "gui+eight"
+      },
+      {
+        "label": "09",
+        "keys": "gui+nine"
+      }
+    ]
   },
   {
     "key": "hyprland.apps",
