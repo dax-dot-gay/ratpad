@@ -1,12 +1,4 @@
-import board
-import digitalio
-import time
+from util.manager import PadManager
 
-led = digitalio.DigitalInOut(board.LED)
-led.direction = digitalio.Direction.OUTPUT
-
-while True:
-    led.value = True
-    time.sleep(0.5)
-    led.value = False
-    time.sleep(0.5)
+manager = PadManager()
+manager.run()
