@@ -55,7 +55,7 @@ class ModeManager:
             data = json.load(f)
 
         self.modes = [Mode.from_entry(entry) for entry in data["modes"]]
-        self.colors = data["colors"]
+        self.colors: dict[str, list[int]] = data["colors"]
 
     @property
     def mode_mapping(self) -> dict[str, Mode]:

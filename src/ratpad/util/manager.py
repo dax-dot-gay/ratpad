@@ -86,8 +86,20 @@ class PadManager:
                     if line.strip().endswith(b";"):
                         command = self.parse_packet(line)
                         self.send_packet(
-                            "recv", {"command": command.command, "data": command.data}
+                            "RECV",
+                            data={"command": command.command, "data": command.data},
                         )
+                        if command.command == "set_color":
+                            if (
+                                command.data.get("key", None)
+                                in self.modes.colors.keys()
+                                and command.data.get("color", None) != None
+                            ):
+                                self.modes.colors[command.data["key"]] = command.data[
+                                    "color"
+                                ]
+                                self.send_packet("RECV", data=command.data)
+                                self.display.refresh()
                 if bool(self.pad.keys.events):
                     event = self.pad.keys.events.get()
                     key = Keys.get(event.key_number)
