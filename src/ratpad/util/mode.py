@@ -9,16 +9,22 @@ class Mode:
         title: str,
         title_short: str,
         keys: list[str | dict[str, str] | None],
+        color: list[str] | None = None,
     ):
         self.key = key
         self.title = title
         self.title_short = title_short
+        self.color = color
         self.keys = [
             (
                 (
-                    {"label": i, "keys": None}
+                    {"label": i, "keys": None, "color": None}
                     if isinstance(i, str)
-                    else {"label": i["label"], "keys": i.get("keys", None)}
+                    else {
+                        "label": i["label"],
+                        "keys": i.get("keys", None),
+                        "color": i.get("color", None),
+                    }
                 )
                 if i
                 else None
@@ -45,10 +51,11 @@ class Mode:
 
 class ModeManager:
     def __init__(self):
-        with open("modes.json", "r") as f:
+        with open("db.json", "r") as f:
             data = json.load(f)
 
-        self.modes = [Mode.from_entry(entry) for entry in data]
+        self.modes = [Mode.from_entry(entry) for entry in data["modes"]]
+        self.colors = data["colors"]
 
     @property
     def mode_mapping(self) -> dict[str, Mode]:

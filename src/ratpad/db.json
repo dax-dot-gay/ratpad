@@ -1,0 +1,60 @@
+{
+  "colors": {
+    "select": [214, 0, 104],
+    "next": [12, 113, 214],
+    "previous": [12, 113, 214],
+    "default": [18, 237, 247],
+    "brightness": 0.2
+  },
+  "modes": [
+    {
+      "key": "hyprland.workspaces",
+      "title": "Workspaces",
+      "title_short": "WKSP",
+      "keys": [
+        {
+          "label": "01",
+          "keys": "gui+one"
+        },
+        {
+          "label": "02",
+          "keys": "gui+two"
+        },
+        {
+          "label": "03",
+          "keys": "gui+three"
+        },
+        {
+          "label": "04",
+          "keys": "gui+four"
+        },
+        {
+          "label": "05",
+          "keys": "gui+five"
+        },
+        {
+          "label": "06",
+          "keys": "gui+six"
+        },
+        {
+          "label": "07",
+          "keys": "gui+seven"
+        },
+        {
+          "label": "08",
+          "keys": "gui+eight"
+        },
+        {
+          "label": "09",
+          "keys": "gui+nine"
+        }
+      ]
+    },
+    {
+      "key": "hyprland.apps",
+      "title": "Apps",
+      "title_short": "APPS",
+      "keys": ["CODE", "DISC", "TERM", "WEB", "BTOP", "NVIM", "VPN"]
+    }
+  ]
+}

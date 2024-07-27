@@ -64,6 +64,10 @@ class DisplayManager:
             )
             + " ->"
         )
+        self.pad.pixels.brightness = self.modes.colors["brightness"]
+        self.pad.pixels[0] = self.modes.colors["previous"]
+        self.pad.pixels[1] = self.modes.colors["select"]
+        self.pad.pixels[2] = self.modes.colors["next"]
 
         modes = self.page_modes
         buttons = []
@@ -71,8 +75,12 @@ class DisplayManager:
         for i in range(9):
             if i < len(modes):
                 buttons.append("[" + self.pad_center(modes[i].title_short, 4) + "]")
+                self.pad.pixels[3 + i] = (
+                    modes[i].color if modes[i].color else self.modes.colors["default"]
+                )
             else:
                 buttons.append("[ -- ]")
+                self.pad.pixels[3 + i] = [0, 0, 0]
             if len(buttons) == 3:
                 self.display[lc].text = " ".join(buttons)
                 buttons = []
@@ -84,14 +92,25 @@ class DisplayManager:
             "<- " + self.pad_center("[HOME]", DISPLAY_LENGTH - 6) + " ->"
         )
 
+        self.pad.pixels.brightness = self.modes.colors["brightness"]
+        self.pad.pixels[0] = self.modes.colors["previous"]
+        self.pad.pixels[1] = self.modes.colors["select"]
+        self.pad.pixels[2] = self.modes.colors["next"]
+
         mode = self.mode
         buttons = []
         lc = 2
         for i in range(9):
             if i < len(mode.keys):
                 buttons.append("[" + self.pad_center(mode.label(i), 4) + "]")
+                self.pad.pixels[3 + i] = (
+                    (mode[i] if mode[i]["color"] else self.modes.colors["default"])
+                    if mode[i]
+                    else [0, 0, 0]
+                )
             else:
                 buttons.append("[ -- ]")
+                self.pad.pixels[3 + i] = [0, 0, 0]
             if len(buttons) == 3:
                 self.display[lc].text = " ".join(buttons)
                 buttons = []
