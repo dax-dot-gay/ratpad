@@ -1,5 +1,10 @@
 import json
 
+try:
+    from typing import Literal
+except ImportError:
+    pass
+
 
 class Mode:
 
@@ -48,14 +53,48 @@ class Mode:
         else:
             return None
 
+    def as_json(self):
+        return {
+            "key": self.key,
+            "title": self.title,
+            "title_short": self.title_short,
+            "color": self.color,
+            "keys": self.keys,
+        }
+
 
 class ModeManager:
     def __init__(self):
-        with open("db.json", "r") as f:
-            data = json.load(f)
+        try:
+            with open("db.json", "r") as f:
+                data = json.load(f)
+        except:
+            with open("db.json", "w") as f:
+                json.dump(
+                    {
+                        "colors": {
+                            "next": [0, 0, 0],
+                            "previous": [0, 0, 0],
+                            "select": [0, 0, 0],
+                            "brightness": 1,
+                        },
+                        "modes": [],
+                    },
+                    f,
+                )
+
+            with open("db.json", "r") as f:
+                data = json.load(f)
 
         self.modes = [Mode.from_entry(entry) for entry in data["modes"]]
         self.colors: dict[str, list[int]] = data["colors"]
+
+    def as_dict(self):
+        return {"colors": self.colors, "modes": [i.as_json() for i in self.modes]}
+
+    def save(self):
+        with open("db.json", "w") as f:
+            json.dump(self.as_dict(), f)
 
     @property
     def mode_mapping(self) -> dict[str, Mode]:
@@ -88,3 +127,27 @@ class ModeManager:
         if next_index < 0:
             return self.modes[len(self.modes) - 1]
         return self.modes[next_index]
+
+    def write_mode(self, mode: Mode):
+        if mode.key in [i.key for i in self.modes]:
+            self.modes[[i.key for i in self.modes].index(mode.key)] = mode
+        else:
+            self.modes.append(mode)
+
+        self.save()
+
+    def delete_mode(self, key: str):
+        self.modes = [i for i in self.modes if i.key != key]
+        self.save()
+
+    def set_color(
+        self,
+        key: Literal["previous", "next", "select", "brightness"],
+        value: list[int] | float,
+    ):
+        self.colors[key] = value
+        self.save()
+
+    def clear(self):
+        self.modes = []
+        self.save()

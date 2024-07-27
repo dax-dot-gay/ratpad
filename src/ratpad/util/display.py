@@ -75,6 +75,7 @@ class DisplayManager:
         for i in range(9):
             if i < len(modes):
                 buttons.append("[" + self.pad_center(modes[i].title_short, 4) + "]")
+                print(modes[i].color)
                 self.pad.pixels[3 + i] = (
                     modes[i].color if modes[i].color else self.modes.colors["default"]
                 )

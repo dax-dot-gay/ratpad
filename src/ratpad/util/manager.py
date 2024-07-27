@@ -13,6 +13,8 @@ try:
 except ImportError:
     pass
 
+import traceback
+
 
 class CommandPacket:
     def __init__(self, data: bytes) -> None:
@@ -76,8 +78,16 @@ class PadManager:
 
         self.send_packet("event", packet)
 
+    def log(
+        self,
+        content: str,
+        level: Literal["debug", "info", "warning", "error", "critical"] = "debug",
+    ):
+        self.send_packet("log", data={"content": content, "level": level})
+
     def run(self):
         self.send_packet("connect")
+        self.log("System connected.", level="info")
         self.display.refresh()
         try:
             while True:
@@ -85,21 +95,45 @@ class PadManager:
                 if line:
                     if line.strip().endswith(b";"):
                         command = self.parse_packet(line)
-                        self.send_packet(
-                            "RECV",
-                            data={"command": command.command, "data": command.data},
-                        )
-                        if command.command == "set_color":
-                            if (
-                                command.data.get("key", None)
-                                in self.modes.colors.keys()
-                                and command.data.get("color", None) != None
-                            ):
-                                self.modes.colors[command.data["key"]] = command.data[
-                                    "color"
-                                ]
-                                self.send_packet("RECV", data=command.data)
+                        self.log(f"Parsing command: {command.command}")
+                        try:
+                            if command.command == "set_color":
+                                if (
+                                    command.data.get("key", None)
+                                    in self.modes.colors.keys()
+                                    and command.data.get("color", None) != None
+                                ):
+                                    self.modes.colors[command.data["key"]] = (
+                                        command.data["color"]
+                                    )
+                                    self.display.refresh()
+                                    self.log(
+                                        f"Set color [{command.data['key']}] to [{', '.join([str(i) for i in command.data['color']])}]"
+                                    )
+                            elif command.command == "write_mode":
+                                self.modes.write_mode(Mode.from_entry(command.data))
                                 self.display.refresh()
+                                self.log(
+                                    f"Written mode: {Mode.from_entry(command.data).key}"
+                                )
+                            elif command.command == "delete_mode":
+                                if self.mode and command.data["key"] == self.mode.key:
+                                    self.mode = None
+                                    self.display.set_mode(None)
+                                self.modes.delete_mode(command.data["key"])
+                                self.display.refresh()
+                                self.log(f"Removed mode: {command.data['key']}")
+                            elif command.command == "clear_modes":
+                                self.mode = None
+                                self.modes.clear()
+                                self.display.set_mode(None)
+                                self.display.refresh()
+                                self.log("Cleared modes")
+                            elif command.command == "read_config":
+                                self.send_packet("config", data=self.modes.as_dict())
+                        except:
+                            self.log(traceback.format_exc(), level="error")
+
                 if bool(self.pad.keys.events):
                     event = self.pad.keys.events.get()
                     key = Keys.get(event.key_number)
@@ -157,4 +191,5 @@ class PadManager:
 
                 time.sleep(0.1)
         finally:
+            self.log("Disconnected.", level="info")
             self.send_packet("disconnect")
