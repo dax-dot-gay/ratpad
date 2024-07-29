@@ -1,0 +1,5 @@
+[workspace]
+
+members = [
+    "ratpad-client/src-tauri",
+]
