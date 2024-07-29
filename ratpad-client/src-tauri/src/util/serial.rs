@@ -5,6 +5,9 @@ pub mod serial_client {
     use tauri::{AppHandle, Manager};
     use tokio_serial::{available_ports, SerialPortType, UsbPortInfo};
 
+    use crate::ratpad_communication::{parse_message, Message};
+
+
     #[derive(Serialize)]
     #[derive(Debug)]
     pub enum SerialErrorType {
@@ -58,7 +61,8 @@ pub mod serial_client {
 
     #[derive(Serialize, Clone)]
     pub enum SerialEvent {
-        Event(String),
+        Event(Option<Message>),
+        Connect,
         Disconnect
     }
 
@@ -84,7 +88,7 @@ pub mod serial_client {
                 let result = reader.read_line(&mut buf);
                 match result {
                     Ok(_) => {
-                        handle.emit_all("ratpad://serial", SerialEvent::Event(buf)).unwrap();
+                        handle.emit_all("ratpad://serial", SerialEvent::Event(parse_message(buf))).unwrap();
                     },
                     Err(error) => match error.kind() {
                         ErrorKind::BrokenPipe => break,

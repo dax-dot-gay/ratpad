@@ -5,6 +5,7 @@ mod util;
 
 
 pub use util::serial_client;
+pub use util::ratpad_communication;
 use util::serial_client::{get_ports, listen_serial, PortInfo, SerialError};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
