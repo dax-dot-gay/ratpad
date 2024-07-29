@@ -12,6 +12,8 @@
   "circuitpython.board.version": null,
   "circuitpython.board.vid": "0x239A",
   "circuitpython.board.pid": "0x8108",
-  "rust-analyzer.linkedProjects": ["ratpad-client/src-tauri/Cargo.toml"],
+  "rust-analyzer.linkedProjects": [
+    "/mnt/data1/Programming/Python/micropython/ratpad/ratpad-client/src-tauri/Cargo.toml"
+  ],
   "rust-analyzer.restartServerOnConfigChange": true
 }
