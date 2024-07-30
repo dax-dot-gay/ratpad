@@ -2,10 +2,10 @@ pub mod ratpad_communication {
     use serde::{Deserialize, Serialize};
     use serde_json::{Error, Value};
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct Message {
-        header: String,
-        data: Option<Value>,
+        pub header: String,
+        pub data: Option<Value>,
     }
 
     pub fn create_message(header: String, data: Option<Value>) -> Result<String, Error> {

@@ -10,8 +10,23 @@ export default function App() {
 
   return (
     <MantineProvider>
-      <Button onClick={() => invoke("list_ports").then(console.log)}>
+      <Button
+        onClick={() =>
+          invoke("connect", { port: "/dev/ttyACM1", rate: 115200 }).then(
+            console.log
+          )
+        }
+      >
         TEST
+      </Button>
+      <Button
+        onClick={() =>
+          invoke("send_serial", {
+            message: { header: "READ_CONFIG", data: null },
+          }).then(console.log)
+        }
+      >
+        CNF
       </Button>
     </MantineProvider>
   );
