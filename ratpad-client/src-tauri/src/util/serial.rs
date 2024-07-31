@@ -12,7 +12,7 @@ pub mod serial_client {
     use tauri::{App, Manager};
     use tokio_serial::{available_ports, new, SerialPort, SerialPortType, UsbPortInfo};
 
-    use crate::ratpad_communication::{create_message, parse_message, Message};
+    use crate::{ratpad_communication::{create_message, parse_message, Message}, util::app_state::{ApplicationState, ConnectionState}};
 
     #[derive(Serialize, Debug)]
     pub enum SerialErrorType {
@@ -128,6 +128,8 @@ pub mod serial_client {
                             handle
                                 .emit_all("ratpad://serial", SerialEvent::Disconnect)
                                 .expect("CRITICAL: emit-failure");
+                            let app_state = handle.state::<ApplicationState>();
+                            app_state.set(ConnectionState::Disconnected, None, None);
                         }
                         ListenerCommand::Connect { new_port, new_rate } => {
                             let builder =
@@ -135,7 +137,7 @@ pub mod serial_client {
                             let opened = builder.open();
                             if let Ok(serial) = opened {
                                 state = Some(ListenerState {
-                                    port: new_port,
+                                    port: new_port.clone(),
                                     rate: new_rate,
                                     reader: Some(BufReader::with_capacity(1, serial.try_clone().unwrap())),
                                     writer: Some(BufWriter::with_capacity(1, serial.try_clone().unwrap()))
@@ -143,13 +145,17 @@ pub mod serial_client {
                                 handle
                                     .emit_all("ratpad://serial", SerialEvent::Connect)
                                     .expect("CRITICAL: emit-failure");
+                                let app_state = handle.state::<ApplicationState>();
+                                app_state.set(ConnectionState::Connected, Some(new_port.clone()), Some(new_rate));
                             } else if let Err(_) = opened {
                                 state = Some(ListenerState {
-                                    port: new_port,
+                                    port: new_port.clone(),
                                     rate: new_rate,
                                     reader: None,
                                     writer: None
                                 });
+                                let app_state = handle.state::<ApplicationState>();
+                                app_state.set(ConnectionState::Waiting, Some(new_port.clone()), Some(new_rate));
                             }
                         }
                         ListenerCommand::Quit => break,
@@ -204,6 +210,9 @@ pub mod serial_client {
                                 handle
                                 .emit_all("ratpad://serial", SerialEvent::Disconnect)
                                 .expect("CRITICAL: emit-failure");
+                                let app_state = handle.state::<ApplicationState>();
+                                app_state.set_connection_state(ConnectionState::Waiting);
+                            
                             }
                         } else {
                             if let Ok(opened) = new(st.port.clone(), st.rate)
@@ -215,6 +224,8 @@ pub mod serial_client {
                                 handle
                                 .emit_all("ratpad://serial", SerialEvent::Connect)
                                 .expect("CRITICAL: emit-failure");
+                                let app_state = handle.state::<ApplicationState>();
+                                app_state.set_connection_state(ConnectionState::Connected);
                             }
                         }
                     }

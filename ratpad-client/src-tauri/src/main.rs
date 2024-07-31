@@ -3,12 +3,17 @@
 
 mod util;
 
+use std::sync::Mutex;
 
 use tauri::Manager;
+use util::app_state::ApplicationState;
+use util::app_state::ConnectionState;
+pub use util::ratpad_communication;
 use util::ratpad_communication::Message;
 pub use util::serial_client;
-pub use util::ratpad_communication;
-use util::serial_client::{get_ports, PortInfo, SerialError, start_serial_listener, ListenerCommand};
+use util::serial_client::{
+    get_ports, start_serial_listener, ListenerCommand, PortInfo, SerialError,
+};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -16,13 +21,16 @@ fn list_ports() -> Result<Vec<PortInfo>, SerialError> {
     let result = get_ports();
     match result {
         Ok(val) => Ok(val),
-        Err(error_data) => Err(error_data)
+        Err(error_data) => Err(error_data),
     }
 }
 
 #[tauri::command]
 async fn connect(app: tauri::AppHandle, port: String, rate: u32) -> Result<(), String> {
-    if let Ok(data) = serde_json::to_string(&ListenerCommand::Connect { new_port: port.clone(), new_rate: rate }) {
+    if let Ok(data) = serde_json::to_string(&ListenerCommand::Connect {
+        new_port: port.clone(),
+        new_rate: rate,
+    }) {
         app.trigger_global("ratpad://serial/cmd", Some(data));
     }
     Ok(())
@@ -46,11 +54,21 @@ async fn disconnect(app: tauri::AppHandle) -> Result<(), String> {
 
 fn main() {
     tauri::Builder::default()
+        .manage(ApplicationState {
+            connection: Mutex::new(ConnectionState::Disconnected),
+            port: Mutex::new(None),
+            rate: Mutex::new(None),
+        })
         .setup(|app| {
             start_serial_listener(app);
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![list_ports, connect, send_serial, disconnect])
+        .invoke_handler(tauri::generate_handler![
+            list_ports,
+            connect,
+            send_serial,
+            disconnect
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
