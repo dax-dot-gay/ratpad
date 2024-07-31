@@ -37,4 +37,75 @@ pub mod ratpad_communication {
             None
         }
     }
+
+    #[derive(Serialize,Deserialize, Clone, Debug)]
+    pub struct ColorsConfig {
+        next: (u32, u32, u32),
+        previous: (u32, u32, u32),
+        select: (u32, u32, u32),
+        brightness: f64
+    }
+
+    #[derive(Serialize,Deserialize, Clone, Debug)]
+    pub enum ColorKey {
+        Next,
+        Previous,
+        Select,
+        Brightness
+    }
+
+    #[derive(Serialize,Deserialize, Clone, Debug)]
+    pub struct ModeKey {
+        label: String,
+        keys: String,
+        color: Option<(u32, u32, u32)>
+    }
+
+    #[derive(Serialize,Deserialize, Clone, Debug)]
+    pub struct ModeConfig {
+        key: String,
+        title: String,
+        title_short: String,
+        keys: Vec<Option<ModeKey>>,
+        color: Option<(u32, u32, u32)>
+    }
+
+    #[derive(Serialize,Deserialize, Clone, Debug)]
+    pub struct PadConfig {
+        colors: ColorsConfig,
+        modes: Vec<ModeConfig>
+    }
+
+    pub mod messages {
+        use serde::{Deserialize, Serialize};
+
+        use super::{ColorKey, ModeConfig, PadConfig};
+
+        #[derive(Serialize,Deserialize, Clone, Debug)]
+        pub struct KeyInfo {
+            code: u32,
+            name: String,
+            action: u32
+        }
+
+        #[derive(Clone, Debug, Serialize, Deserialize)]
+        pub enum PadMessage {
+            KeyEvent{mode: String, key: KeyInfo},
+            EncoderSwitchEvent{mode: String, pressed: bool},
+            EncoderRotationEvent{mode: String, value: i64},
+            Log{content: String, level: String},
+            Connect,
+            Disconnect,
+            Config{config: PadConfig}
+        }
+
+        #[derive(Clone, Debug, Serialize, Deserialize)]
+        pub enum PadCommand {
+            SetColor{key: ColorKey, color: (u32, u32, u32)},
+            WriteMode{mode: ModeConfig},
+            DeleteMode{key: String},
+            ClearModes,
+            ReadConfig
+        }
+    }
 }
