@@ -11,6 +11,7 @@ use util::app_state::ConnectionState;
 pub use util::ratpad_communication;
 use util::ratpad_communication::Message;
 pub use util::serial_client;
+use util::serial_client::SerialEvent;
 use util::serial_client::{
     get_ports, start_serial_listener, ListenerCommand, PortInfo, SerialError,
 };
@@ -61,6 +62,15 @@ fn main() {
         })
         .setup(|app| {
             start_serial_listener(app);
+            let handle = app.handle();
+            app.listen_global("ratpad://serial", move |event| {
+                if let Some(payload) = event.payload() {
+                    if let Ok(parsed) = serde_json::from_str::<SerialEvent>(payload) {
+                        handle.emit_all("ratpad://serial", parsed).expect("Serial emit failed");
+                    }
+                    
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

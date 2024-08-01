@@ -9,10 +9,13 @@ pub mod serial_client {
     };
 
     use serde::{Deserialize, Serialize};
-    use tauri::{App, Manager};
+    use tauri::{App, AppHandle, Manager};
     use tokio_serial::{available_ports, new, SerialPort, SerialPortType, UsbPortInfo};
 
-    use crate::{ratpad_communication::{create_message, parse_message, Message}, util::app_state::{ApplicationState, ConnectionState}};
+    use crate::{
+        ratpad_communication::{create_message, parse_message, Message},
+        util::app_state::{ApplicationState, ConnectionState},
+    };
 
     #[derive(Serialize, Debug)]
     pub enum SerialErrorType {
@@ -63,9 +66,9 @@ pub mod serial_client {
         port_type: SerialPortType,
     }
 
-    #[derive(Serialize, Clone)]
+    #[derive(Serialize, Clone, Deserialize)]
     pub enum SerialEvent {
-        Event(Option<Message>),
+        Event(Message),
         Connect,
         Disconnect,
     }
@@ -99,7 +102,13 @@ pub mod serial_client {
         port: String,
         rate: u32,
         reader: Option<BufReader<Box<dyn SerialPort>>>,
-        writer: Option<BufWriter<Box<dyn SerialPort>>>
+        writer: Option<BufWriter<Box<dyn SerialPort>>>,
+    }
+
+    pub fn publish_serial_event(handle: AppHandle, event: SerialEvent) {
+        if let Ok(serialized) = serde_json::to_string::<SerialEvent>(&event) {
+            handle.trigger_global("ratpad://serial", Some(serialized));
+        }
     }
 
     pub fn start_serial_listener(app: &mut App) -> JoinHandle<()> {
@@ -125,9 +134,7 @@ pub mod serial_client {
                     match command {
                         ListenerCommand::Disconnect => {
                             state = None;
-                            handle
-                                .emit_all("ratpad://serial", SerialEvent::Disconnect)
-                                .expect("CRITICAL: emit-failure");
+                            publish_serial_event(handle.clone(), SerialEvent::Disconnect);
                             let app_state = handle.state::<ApplicationState>();
                             app_state.set(ConnectionState::Disconnected, None, None);
                         }
@@ -139,35 +146,47 @@ pub mod serial_client {
                                 state = Some(ListenerState {
                                     port: new_port.clone(),
                                     rate: new_rate,
-                                    reader: Some(BufReader::with_capacity(1, serial.try_clone().unwrap())),
-                                    writer: Some(BufWriter::with_capacity(1, serial.try_clone().unwrap()))
+                                    reader: Some(BufReader::with_capacity(
+                                        1,
+                                        serial.try_clone().unwrap(),
+                                    )),
+                                    writer: Some(BufWriter::with_capacity(
+                                        1,
+                                        serial.try_clone().unwrap(),
+                                    )),
                                 });
-                                handle
-                                    .emit_all("ratpad://serial", SerialEvent::Connect)
-                                    .expect("CRITICAL: emit-failure");
+                                publish_serial_event(handle.clone(), SerialEvent::Connect);
                                 let app_state = handle.state::<ApplicationState>();
-                                app_state.set(ConnectionState::Connected, Some(new_port.clone()), Some(new_rate));
+                                app_state.set(
+                                    ConnectionState::Connected,
+                                    Some(new_port.clone()),
+                                    Some(new_rate),
+                                );
                             } else if let Err(_) = opened {
                                 state = Some(ListenerState {
                                     port: new_port.clone(),
                                     rate: new_rate,
                                     reader: None,
-                                    writer: None
+                                    writer: None,
                                 });
                                 let app_state = handle.state::<ApplicationState>();
-                                app_state.set(ConnectionState::Waiting, Some(new_port.clone()), Some(new_rate));
+                                app_state.set(
+                                    ConnectionState::Waiting,
+                                    Some(new_port.clone()),
+                                    Some(new_rate),
+                                );
                             }
                         }
                         ListenerCommand::Quit => break,
                         ListenerCommand::Send(msg) => {
                             if let Some(ref mut st) = state {
                                 if let Some(ref mut writer) = st.writer {
-                                    if let Ok(ser) = create_message(msg.header, msg.data) {
+                                    if let Ok(ser) = create_message(msg) {
                                         match writer.write_all(ser.as_bytes()) {
                                             Ok(_) => {
                                                 let _ = writer.flush();
-                                            },
-                                            Err(_) => ()
+                                            }
+                                            Err(_) => (),
                                         }
                                     }
                                 }
@@ -183,23 +202,19 @@ pub mod serial_client {
                             for line in st.reader.as_mut().unwrap().lines() {
                                 match line {
                                     Ok(ref read) => {
-                                        handle
-                                            .emit_all(
-                                                "ratpad://serial",
-                                                SerialEvent::Event(parse_message(read.clone())),
-                                            )
-                                            .expect("CRITICAL: emit-failure");
-                                        
+                                        if let Some(msg) = parse_message(read.clone()) {
+                                            publish_serial_event(handle.clone(), SerialEvent::Event(msg));
+                                        }
                                     }
                                     Err(ref error) => match error.kind() {
                                         ErrorKind::BrokenPipe => {
                                             failure = true;
                                             break;
-                                        },
+                                        }
                                         ErrorKind::TimedOut => {
                                             break;
-                                        },
-                                        _ => ()
+                                        }
+                                        _ => (),
                                     },
                                 }
                             }
@@ -207,23 +222,20 @@ pub mod serial_client {
                             if failure {
                                 st.writer = None;
                                 st.reader = None;
-                                handle
-                                .emit_all("ratpad://serial", SerialEvent::Disconnect)
-                                .expect("CRITICAL: emit-failure");
+                                publish_serial_event(handle.clone(), SerialEvent::Disconnect);
                                 let app_state = handle.state::<ApplicationState>();
                                 app_state.set_connection_state(ConnectionState::Waiting);
-                            
                             }
                         } else {
                             if let Ok(opened) = new(st.port.clone(), st.rate)
                                 .timeout(Duration::from_millis(100))
                                 .open()
                             {
-                                st.reader = Some(BufReader::with_capacity(1, opened.try_clone().unwrap()));
-                                st.writer = Some(BufWriter::with_capacity(1, opened.try_clone().unwrap()));
-                                handle
-                                .emit_all("ratpad://serial", SerialEvent::Connect)
-                                .expect("CRITICAL: emit-failure");
+                                st.reader =
+                                    Some(BufReader::with_capacity(1, opened.try_clone().unwrap()));
+                                st.writer =
+                                    Some(BufWriter::with_capacity(1, opened.try_clone().unwrap()));
+                                publish_serial_event(handle.clone(), SerialEvent::Connect);
                                 let app_state = handle.state::<ApplicationState>();
                                 app_state.set_connection_state(ConnectionState::Connected);
                             }
