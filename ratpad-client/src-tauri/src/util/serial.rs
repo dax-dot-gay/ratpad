@@ -137,6 +137,7 @@ pub mod serial_client {
                             publish_serial_event(handle.clone(), SerialEvent::Disconnect);
                             let app_state = handle.state::<ApplicationState>();
                             app_state.set(ConnectionState::Disconnected, None, None);
+                            app_state.lock_config().unwrap().clear_connection().save(handle.clone());
                         }
                         ListenerCommand::Connect { new_port, new_rate } => {
                             let builder =
@@ -162,6 +163,7 @@ pub mod serial_client {
                                     Some(new_port.clone()),
                                     Some(new_rate),
                                 );
+                                app_state.lock_config().unwrap().set_connection(new_port.clone(), new_rate).save(handle.clone());
                             } else if let Err(_) = opened {
                                 state = Some(ListenerState {
                                     port: new_port.clone(),
@@ -175,6 +177,7 @@ pub mod serial_client {
                                     Some(new_port.clone()),
                                     Some(new_rate),
                                 );
+                                app_state.lock_config().unwrap().set_connection(new_port.clone(), new_rate).save(handle.clone());
                             }
                         }
                         ListenerCommand::Quit => break,

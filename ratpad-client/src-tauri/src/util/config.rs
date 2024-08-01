@@ -176,5 +176,25 @@ pub mod configuration {
             file.write_all(self.to_json().expect("Unable to serialize config").as_bytes()).expect("Unable to write data");
             self.clone()
         }
+
+        pub fn set_connection(&mut self, port: String, rate: u32) -> AppConfig {
+            self.device_port = Some(port);
+            self.device_rate = Some(rate);
+            self.clone()
+        }
+
+        pub fn clear_connection(&mut self) -> AppConfig {
+            self.device_port = None;
+            self.device_rate = None;
+            self.clone()
+        }
+
+        pub fn set(&mut self, update: AppConfig) -> AppConfig {
+            self.device_port = update.device_port;
+            self.device_rate = update.device_rate;
+            self.colors = update.colors;
+            self.modes = update.modes;
+            self.clone()
+        }
     }
 }

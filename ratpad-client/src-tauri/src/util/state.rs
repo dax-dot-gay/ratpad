@@ -1,5 +1,5 @@
 pub mod app_state {
-    use std::sync::Mutex;
+    use std::sync::{Mutex, MutexGuard};
 
     use crate::util::configuration::AppConfig;
 
@@ -37,12 +37,6 @@ pub mod app_state {
             }
         }
 
-        pub fn set_config(&self, new_config: Option<AppConfig>) -> () {
-            if let Ok(mut config) = self.config.lock() {
-                *config = new_config.unwrap_or(AppConfig::default());
-            }
-        }
-
         pub fn set_connection_parameters(&self, new_port: Option<String>, new_rate: Option<u32>) -> () {
             if let Ok(mut port) = self.port.lock() {
                 *port = new_port;
@@ -50,6 +44,14 @@ pub mod app_state {
 
             if let Ok(mut rate) = self.rate.lock() {
                 *rate = new_rate;
+            }
+        }
+
+        pub fn lock_config(&self) -> Option<MutexGuard<AppConfig>> {
+            if let Ok(conf) = self.config.lock() {
+                Some(conf)
+            } else {
+                None
             }
         }
     }
