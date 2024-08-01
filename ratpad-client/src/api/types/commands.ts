@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api";
+import { PortInfo } from "./serial";
 
 interface CommandType<Type extends `${string}.${string}`, Data> {
     type: Type;
@@ -7,7 +8,7 @@ interface CommandType<Type extends `${string}.${string}`, Data> {
 
 interface CommandReturnType<Type extends `${string}.${string}`, Value> {
     type: Type;
-    value: Value | null;
+    result?: Value;
 }
 
 type CommandSpec<
@@ -27,17 +28,41 @@ export type SerialConnect = CommandSpec<
 
 export type SerialDisconnect = CommandSpec<"serial.disconnect">;
 
-export type SerialPortList = CommandSpec<"serial.list_ports", null, any>;
+export type SerialPortList = CommandSpec<"serial.list_ports", null, PortInfo[]>;
+
+export class CommandResult<T extends CommandSpec> {
+    public constructor(
+        private cmd: T["command"],
+        private is_success: boolean,
+        private output: T["returnType"]["result"] | string
+    ) {}
+
+    public get success(): boolean {
+        return this.is_success;
+    }
+
+    public get command(): T["command"] {
+        return this.cmd;
+    }
+
+    public get result(): T["returnType"]["result"] | null {
+        return this.success ? this.output : null;
+    }
+
+    public get error(): string | null {
+        return this.success ? null : this.output;
+    }
+}
 
 export async function executeCommand<T extends CommandSpec>(
     command: T["command"]
-): Promise<T["returnType"]["value"] | string> {
+): Promise<CommandResult<T>> {
     try {
         const result = await invoke<T["returnType"]>("execute_command", {
             command,
         });
-        return result;
+        return new CommandResult<T>(command, true, result.result);
     } catch (e) {
-        return e;
+        return new CommandResult<T>(command, false, e);
     }
 }
