@@ -15,15 +15,27 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "fs": {
+        "all": true
+      },
+      "path": {
+        "all": true
       }
     },
     "windows": [
       {
+        "label": "main",
         "title": "ratpad-client",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "visible": false
       }
     ],
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
     "security": {
       "csp": null
     },
