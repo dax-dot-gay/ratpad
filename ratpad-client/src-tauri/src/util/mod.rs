@@ -9,3 +9,6 @@ pub use state::app_state;
 
 mod config;
 pub use config::configuration;
+
+mod commands;
+pub use commands::command_handler;

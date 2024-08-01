@@ -17,13 +17,13 @@ pub mod serial_client {
         util::app_state::{ApplicationState, ConnectionState},
     };
 
-    #[derive(Serialize, Debug)]
+    #[derive(Serialize, Debug, Deserialize, Clone)]
     pub enum SerialErrorType {
         List,
         Connection(String),
     }
 
-    #[derive(Serialize, Debug)]
+    #[derive(Serialize, Debug, Deserialize, Clone)]
     pub struct SerialError {
         error_type: SerialErrorType,
         error_source: String,
@@ -37,7 +37,7 @@ pub mod serial_client {
 
     impl Error for SerialError {}
 
-    #[derive(Serialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     #[serde(remote = "UsbPortInfo")]
     pub struct UsbPortInfoDef {
         pub vid: u16,
@@ -47,7 +47,7 @@ pub mod serial_client {
         pub product: Option<String>,
     }
 
-    #[derive(Serialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     #[serde(remote = "SerialPortType")]
     pub enum SerialPortTypeDef {
         #[serde(with = "UsbPortInfoDef")]
@@ -58,7 +58,7 @@ pub mod serial_client {
         Unknown,
     }
 
-    #[derive(Serialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     pub struct PortInfo {
         port_name: String,
 

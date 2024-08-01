@@ -4,6 +4,7 @@
 mod util;
 
 use std::sync::Mutex;
+use tauri::AppHandle;
 use tauri::CustomMenuItem;
 use tauri::SystemTray;
 
@@ -14,50 +15,24 @@ use tauri::SystemTrayMenuItem;
 use tauri::WindowEvent;
 use util::app_state::ApplicationState;
 use util::app_state::ConnectionState;
+use util::command_handler::execute;
+use util::command_handler::CommandReturnTypes;
+use util::command_handler::CommandTypes;
 use util::configuration::AppConfig;
 pub use util::ratpad_communication;
-use util::ratpad_communication::Message;
 pub use util::serial_client;
 use util::serial_client::SerialEvent;
 use util::serial_client::{
-    get_ports, start_serial_listener, ListenerCommand, PortInfo, SerialError,
+    start_serial_listener, ListenerCommand
 };
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn list_ports() -> Result<Vec<PortInfo>, SerialError> {
-    let result = get_ports();
-    match result {
-        Ok(val) => Ok(val),
-        Err(error_data) => Err(error_data),
-    }
-}
-
-#[tauri::command]
-async fn connect(app: tauri::AppHandle, port: String, rate: u32) -> Result<(), String> {
-    if let Ok(data) = serde_json::to_string(&ListenerCommand::Connect {
-        new_port: port.clone(),
-        new_rate: rate,
-    }) {
-        app.trigger_global("ratpad://serial/cmd", Some(data));
-    }
-    Ok(())
-}
-
-#[tauri::command]
-async fn send_serial(app: tauri::AppHandle, message: Message) -> Result<(), String> {
-    if let Ok(data) = serde_json::to_string(&ListenerCommand::Send(message)) {
-        app.trigger_global("ratpad://serial/cmd", Some(data));
-    }
-    Ok(())
-}
-
-#[tauri::command]
-async fn disconnect(app: tauri::AppHandle) -> Result<(), String> {
-    if let Ok(data) = serde_json::to_string(&ListenerCommand::Disconnect) {
-        app.trigger_global("ratpad://serial/cmd", Some(data));
-    }
-    Ok(())
+async fn execute_command(app: AppHandle, command: CommandTypes) -> Result<CommandReturnTypes, String> {
+  match execute(app, command) {
+    Ok(res) => Ok(res),
+    Err(reason) => Err(reason.to_string())
+  }
 }
 
 fn generate_tray() -> SystemTray {
@@ -163,10 +138,7 @@ fn main() {
             _ => (),
         })
         .invoke_handler(tauri::generate_handler![
-            list_ports,
-            connect,
-            send_serial,
-            disconnect
+            execute_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
