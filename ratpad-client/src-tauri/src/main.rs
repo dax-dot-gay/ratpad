@@ -14,6 +14,7 @@ use tauri::SystemTrayMenuItem;
 use tauri::WindowEvent;
 use util::app_state::ApplicationState;
 use util::app_state::ConnectionState;
+use util::configuration::AppConfig;
 pub use util::ratpad_communication;
 use util::ratpad_communication::Message;
 pub use util::serial_client;
@@ -74,11 +75,13 @@ fn main() {
             connection: Mutex::new(ConnectionState::Disconnected),
             port: Mutex::new(None),
             rate: Mutex::new(None),
+            config: Mutex::new(AppConfig::default())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             app.trigger_global("ratpad://single-instance", None);
         }))
         .setup(|app| {
+            app.state::<ApplicationState>().set_config(Some(AppConfig::load_config(app.handle())));
             start_serial_listener(app);
             let handle = app.handle();
             let evt_handle = handle.clone();

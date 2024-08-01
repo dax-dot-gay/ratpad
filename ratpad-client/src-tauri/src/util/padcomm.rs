@@ -130,10 +130,10 @@ pub mod ratpad_communication {
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct ColorsConfig {
-        next: (u32, u32, u32),
-        previous: (u32, u32, u32),
-        select: (u32, u32, u32),
-        brightness: f64,
+        pub next: (u32, u32, u32),
+        pub previous: (u32, u32, u32),
+        pub select: (u32, u32, u32),
+        pub brightness: f64,
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -146,23 +146,23 @@ pub mod ratpad_communication {
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct ModeKey {
-        label: String,
-        keys: String,
-        color: Option<(u32, u32, u32)>,
+        pub label: String,
+        pub keys: Option<String>,
+        pub color: Option<(u32, u32, u32)>,
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct ModeConfig {
-        key: String,
-        title: String,
-        title_short: String,
-        keys: Vec<Option<ModeKey>>,
-        color: Option<(u32, u32, u32)>,
+        pub key: String,
+        pub title: String,
+        pub title_short: String,
+        pub keys: Vec<Option<ModeKey>>,
+        pub color: Option<(u32, u32, u32)>,
     }
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct PadConfig {
-        colors: ColorsConfig,
-        modes: Vec<ModeConfig>,
+        pub colors: ColorsConfig,
+        pub modes: Vec<ModeConfig>,
     }
 }
