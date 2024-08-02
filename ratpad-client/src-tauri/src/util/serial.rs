@@ -111,6 +111,12 @@ pub mod serial_client {
         }
     }
 
+    pub fn send_serial_command(handle: AppHandle, command: Message) {
+        if let Ok(serialized) = serde_json::to_string::<ListenerCommand>(&ListenerCommand::Send(command)) {
+            handle.trigger_global("ratpad://serial/cmd", Some(serialized));
+        }
+    }
+
     pub fn start_serial_listener(app: &mut App) -> JoinHandle<()> {
         let (tx, rx) = mpsc::channel::<ListenerCommand>();
 

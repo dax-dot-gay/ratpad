@@ -18,3 +18,9 @@ export type PortInfo = {
     port_name: string;
     port_type: PortType;
 };
+
+export enum ConnectionState {
+    Connected = "Connected",
+    Waiting = "Waiting",
+    Disconnected = "Disconnected",
+}

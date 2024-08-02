@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import { PortInfo } from "./serial";
+import { ConnectionState, PortInfo } from "./serial";
 
 interface CommandType<Type extends `${string}.${string}`, Data> {
     type: Type;
@@ -29,6 +29,18 @@ export type SerialConnect = CommandSpec<
 export type SerialDisconnect = CommandSpec<"serial.disconnect">;
 
 export type SerialPortList = CommandSpec<"serial.list_ports", null, PortInfo[]>;
+
+export type SerialConnectionState = CommandSpec<
+    "serial.get_state",
+    null,
+    { connected: ConnectionState; port?: string; rate?: number }
+>;
+
+export type PadGetConfig = CommandSpec<
+    "pad.get_config",
+    null,
+    { config: object }
+>;
 
 export class CommandResult<T extends CommandSpec> {
     public constructor(

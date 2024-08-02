@@ -21,11 +21,11 @@
     },
     "windows": [
       {
-        "label": "main",
-        "title": "ratpad-client",
-        "width": 800,
-        "height": 600,
-        "visible": false
+          "label": "main",
+          "title": "ratpad-client",
+          "width": 800,
+          "height": 600,
+          "visible": true
       }
     ],
     "systemTray": {

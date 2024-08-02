@@ -1,7 +1,11 @@
 import { Button, MantineProvider } from "@mantine/core";
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
-import { executeCommand, SerialPortList } from "./api/types/commands";
+import {
+    executeCommand,
+    SerialPortList,
+    PadGetConfig,
+} from "./api/types/commands";
 
 export default function App() {
     useEffect(() => {
@@ -12,8 +16,8 @@ export default function App() {
         <MantineProvider>
             <Button
                 onClick={() =>
-                    executeCommand<SerialPortList>({
-                        type: "serial.list_ports",
+                    executeCommand<PadGetConfig>({
+                        type: "pad.get_config",
                         data: null,
                     }).then(console.log)
                 }

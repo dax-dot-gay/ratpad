@@ -2,7 +2,7 @@ pub mod ratpad_communication {
     use serde::{Deserialize, Serialize};
     use serde_json::{Error, Value};
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum EventType {
         Event,
         Connect,
@@ -11,7 +11,7 @@ pub mod ratpad_communication {
         Config,
     }
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum CommandType {
         SetColor,
         WriteMode,
@@ -20,7 +20,7 @@ pub mod ratpad_communication {
         ReadConfig,
     }
 
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, PartialEq, Eq)]
     pub enum MessageType {
         Event(EventType),
         Command(CommandType),

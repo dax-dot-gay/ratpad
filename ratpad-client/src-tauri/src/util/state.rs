@@ -1,8 +1,11 @@
 pub mod app_state {
     use std::sync::{Mutex, MutexGuard};
 
+    use serde::{Deserialize, Serialize};
+
     use crate::util::configuration::AppConfig;
 
+    #[derive(Serialize, Deserialize, Clone)]
     pub enum ConnectionState {
         Connected,
         Waiting,
