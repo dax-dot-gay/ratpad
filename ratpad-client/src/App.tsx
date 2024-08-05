@@ -1,11 +1,7 @@
 import { Button, MantineProvider } from "@mantine/core";
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
-import {
-    executeCommand,
-    SerialPortList,
-    PadGetConfig,
-} from "./api/types/commands";
+import { executeCommand, ConfWriteMode } from "./api/types/commands";
 
 export default function App() {
     useEffect(() => {
@@ -16,9 +12,24 @@ export default function App() {
         <MantineProvider>
             <Button
                 onClick={() =>
-                    executeCommand<PadGetConfig>({
-                        type: "pad.get_config",
-                        data: null,
+                    executeCommand<ConfWriteMode>({
+                        type: "config.write_mode",
+                        mode: {
+                            key: "workspaces",
+                            title: "Workspaces",
+                            title_short: "WKSP",
+                            color: [255, 0, 0],
+                            keys: [
+                                {
+                                    label: "01",
+                                    action: {
+                                        type: "keypress",
+                                        key: "a",
+                                    },
+                                    color: [0, 255, 0],
+                                },
+                            ],
+                        },
                     }).then(console.log)
                 }
             >

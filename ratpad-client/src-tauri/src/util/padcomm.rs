@@ -18,6 +18,8 @@ pub mod ratpad_communication {
         DeleteMode,
         ClearModes,
         ReadConfig,
+        SetMode,
+        SetHome
     }
 
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -62,6 +64,8 @@ pub mod ratpad_communication {
                     CommandType::ReadConfig => "read_config",
                     CommandType::SetColor => "set_color",
                     CommandType::WriteMode => "write_mode",
+                    CommandType::SetMode => "set_mode",
+                    CommandType::SetHome => "set_home"
                 },
                 MessageType::Unknown => "unknown",
             }
@@ -138,9 +142,15 @@ pub mod ratpad_communication {
 
     #[derive(Serialize, Deserialize, Clone, Debug)]
     pub enum ColorKey {
+        #[serde(rename = "next")]
         Next,
+        #[serde(rename = "previous")]
         Previous,
+
+        #[serde(rename = "select")]
         Select,
+
+        #[serde(rename = "brightness")]
         Brightness,
     }
 

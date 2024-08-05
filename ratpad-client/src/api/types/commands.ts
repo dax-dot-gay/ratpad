@@ -1,10 +1,10 @@
 import { invoke } from "@tauri-apps/api";
 import { ConnectionState, PortInfo } from "./serial";
+import { AppModeConfig } from "./mode";
 
-interface CommandType<Type extends `${string}.${string}`, Data> {
+type CommandType<Type extends `${string}.${string}`, Data> = {
     type: Type;
-    data: Data | null;
-}
+} & Data;
 
 interface CommandReturnType<Type extends `${string}.${string}`, Value> {
     type: Type;
@@ -22,8 +22,7 @@ type CommandSpec<
 
 export type SerialConnect = CommandSpec<
     "serial.connect",
-    { port: string; rate: number },
-    null
+    { port: string; rate: number }
 >;
 
 export type SerialDisconnect = CommandSpec<"serial.disconnect">;
@@ -36,11 +35,30 @@ export type SerialConnectionState = CommandSpec<
     { connected: ConnectionState; port?: string; rate?: number }
 >;
 
-export type PadGetConfig = CommandSpec<
-    "pad.get_config",
-    null,
-    { config: object }
+export type GetConfig = CommandSpec<
+    "config.get_config",
+    {},
+    { config: AppModeConfig }
 >;
+
+export type SetColorType =
+    | { key: "next" | "previous" | "select"; color: [number, number, number] }
+    | { key: "brightness"; color: number };
+
+export type ConfSetColor = CommandSpec<"pad.set_color", SetColorType>;
+
+export type ConfWriteMode = CommandSpec<
+    "config.write_mode",
+    { mode: AppModeConfig }
+>;
+
+export type ConfDeleteMode = CommandSpec<"config.delete_mode", { key: string }>;
+
+export type ConfClearModes = CommandSpec<"config.clear_modes">;
+
+export type PadSetHome = CommandSpec<"pad.set_home">;
+
+export type PadSetMode = CommandSpec<"pad.set_mode", { mode: string }>;
 
 export class CommandResult<T extends CommandSpec> {
     public constructor(
@@ -73,7 +91,7 @@ export async function executeCommand<T extends CommandSpec>(
         const result = await invoke<T["returnType"]>("execute_command", {
             command,
         });
-        return new CommandResult<T>(command, true, result.result);
+        return new CommandResult<T>(command, true, result);
     } catch (e) {
         return new CommandResult<T>(command, false, e);
     }

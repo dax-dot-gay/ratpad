@@ -5,7 +5,7 @@ pub mod configuration {
     use serde_json::Error;
     use tauri::AppHandle;
 
-    use crate::ratpad_communication::{ColorsConfig, ModeConfig, ModeKey, PadConfig};
+    use crate::{ratpad_communication::{ColorsConfig, ModeConfig, ModeKey, PadConfig}, util::command_handler::SetColorType};
 
     pub type Color = (u32, u32, u32);
 
@@ -14,11 +14,16 @@ pub mod configuration {
         fn from_pad(value: O) -> I; 
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Deserialize, Clone, Debug)]
     #[serde(tag = "type")]
     pub enum KeyAction {
-        None,
-        KeyPress(String),
+        #[serde(rename = "none")]
+        None{},
+
+        #[serde(rename = "keypress")]
+        KeyPress{key: String},
+
+        #[serde(rename = "command")]
         Command{
             execute: String,
             args: Option<Vec<String>>
@@ -28,21 +33,21 @@ pub mod configuration {
     impl PadCompat<KeyAction, Option<String>> for KeyAction {
         fn to_pad(&self) -> Option<String> {
             match self {
-                KeyAction::KeyPress(key) => Some(key.clone()),
+                KeyAction::KeyPress{key} => Some(key.clone()),
                 _ => None
             }
         }
 
         fn from_pad(value: Option<String>) -> KeyAction {
             if let Some(val) = value {
-                KeyAction::KeyPress(val)
+                KeyAction::KeyPress{key: val}
             } else {
-                KeyAction::None
+                KeyAction::None{}
             }
         }
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct KeyConfig {
         label: String,
         action: KeyAction,
@@ -67,7 +72,7 @@ pub mod configuration {
         }
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Deserialize, Clone, Debug)]
     pub struct AppModeConfig {
         key: String,
         title: String,
@@ -194,6 +199,44 @@ pub mod configuration {
             self.device_rate = update.device_rate;
             self.colors = update.colors;
             self.modes = update.modes;
+            self.clone()
+        }
+
+        pub fn set_color(&mut self, color: SetColorType) -> AppConfig {
+            match color {
+                SetColorType::Next { color } => self.colors.next = color,
+                SetColorType::Previous { color } => self.colors.previous = color,
+                SetColorType::Select { color } => self.colors.select = color,
+                SetColorType::Brightness { color } => self.colors.brightness = color,
+            }
+            self.clone()
+        }
+
+        pub fn write_mode(&mut self, mode: AppModeConfig) -> AppConfig {
+            self.modes = self.modes.iter().filter_map(|m| {
+                if m.key == mode.key {
+                    None
+                } else {
+                    Some(m.clone())
+                }
+            }).collect();
+            self.modes.push(mode);
+            self.clone()
+        }
+
+        pub fn delete_mode(&mut self, mode: String) -> AppConfig {
+            self.modes = self.modes.iter().filter_map(|m| {
+                if m.key == mode {
+                    None
+                } else {
+                    Some(m.clone())
+                }
+            }).collect();
+            self.clone()
+        }
+
+        pub fn clear_modes(&mut self) -> AppConfig {
+            self.modes.clear();
             self.clone()
         }
     }

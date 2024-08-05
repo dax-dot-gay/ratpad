@@ -22,17 +22,18 @@ use util::configuration::AppConfig;
 pub use util::ratpad_communication;
 pub use util::serial_client;
 use util::serial_client::SerialEvent;
-use util::serial_client::{
-    start_serial_listener, ListenerCommand
-};
+use util::serial_client::{start_serial_listener, ListenerCommand};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-async fn execute_command(app: AppHandle, command: CommandTypes) -> Result<CommandReturnTypes, String> {
-  match execute(app, command) {
-    Ok(res) => Ok(res),
-    Err(reason) => Err(reason.to_string())
-  }
+async fn execute_command(
+    app: AppHandle,
+    command: CommandTypes,
+) -> Result<CommandReturnTypes, String> {
+    match execute(app, command) {
+        Ok(res) => Ok(res),
+        Err(reason) => Err(reason.to_string()),
+    }
 }
 
 fn generate_tray() -> SystemTray {
@@ -137,9 +138,7 @@ fn main() {
             }
             _ => (),
         })
-        .invoke_handler(tauri::generate_handler![
-            execute_command
-        ])
+        .invoke_handler(tauri::generate_handler![execute_command])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -76,9 +76,7 @@ class DisplayManager:
             if i < len(modes):
                 buttons.append("[" + self.pad_center(modes[i].title_short, 4) + "]")
                 print(modes[i].color)
-                self.pad.pixels[3 + i] = (
-                    modes[i].color if modes[i].color else self.modes.colors["default"]
-                )
+                self.pad.pixels[3 + i] = modes[i].color if modes[i].color else [0, 0, 0]
             else:
                 buttons.append("[ -- ]")
                 self.pad.pixels[3 + i] = [0, 0, 0]
@@ -105,7 +103,7 @@ class DisplayManager:
             if i < len(mode.keys):
                 buttons.append("[" + self.pad_center(mode.label(i), 4) + "]")
                 self.pad.pixels[3 + i] = (
-                    (mode[i] if mode[i]["color"] else self.modes.colors["default"])
+                    (mode[i]["color"] if mode[i]["color"] else [0, 0, 0])
                     if mode[i]
                     else [0, 0, 0]
                 )
