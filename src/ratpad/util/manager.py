@@ -58,6 +58,7 @@ class PadManager:
         key: Key | None = None,
         encoder_switch: bool | None = None,
         encoder_value: int | None = None,
+        new_mode: str | None = None,
     ):
         if key:
             packet = {"mode": self.mode.key, "type": "key", "key": key.as_dict()}
@@ -73,8 +74,10 @@ class PadManager:
                 "type": "encoder.value",
                 "value": encoder_value,
             }
+        elif new_mode != None:
+            packet = {"mode": self.mode.key, "type": "mode"}
         else:
-            return
+            packet = {"mode": None, "type": "mode"}
 
         self.send_packet("event", packet)
 
@@ -129,6 +132,17 @@ class PadManager:
                                 self.display.set_mode(None)
                                 self.display.refresh()
                                 self.log("Cleared modes")
+                            elif command.command == "set_mode":
+                                if command.data.get("mode", None):
+                                    resolved = self.modes.get(command.data["mode"])
+                                    if resolved:
+                                        self.mode = resolved
+                                        self.display.set_mode(self.mode.key)
+                                        self.send_event(new_mode=command.data["mode"])
+                            elif command.command == "set_home":
+                                self.mode = None
+                                self.display.set_mode(None)
+                                self.send_event(new_mode=None)
                             elif command.command == "read_config":
                                 self.send_packet("config", data=self.modes.as_dict())
                         except:
@@ -150,6 +164,9 @@ class PadManager:
                                 self.display.set_mode(
                                     self.mode.key if self.mode else None
                                 )
+                                self.send_event(
+                                    new_mode=self.mode.key if self.mode else None
+                                )
                             else:
                                 if key == Keys.PREV:
                                     self.display.prev_page()
@@ -161,10 +178,16 @@ class PadManager:
                                         self.mode.key if self.mode else None
                                     )
 
+                                self.send_event(
+                                    new_mode=self.mode.key if self.mode else None
+                                )
+
                         else:
                             if self.mode:
                                 key_info = self.mode[key.code - 3]
+                                self.send_event(key=key)
                                 if key_info:
+
                                     if key_info["keys"]:
                                         self.pad.keyboard.send(
                                             *[
@@ -172,13 +195,14 @@ class PadManager:
                                                 for i in key_info["keys"].split("+")
                                             ]
                                         )
-                                    else:
-                                        self.send_event(key=key)
                             else:
                                 resolved = self.display.resolve_mode(key)
                                 if resolved:
                                     self.mode = resolved
                                     self.display.set_mode(self.mode.key)
+                                    self.send_event(
+                                        new_mode=self.mode.key if self.mode else None
+                                    )
 
                 if self.mode:
                     if self.pad.encoder_switch != self.encoder_switch:
